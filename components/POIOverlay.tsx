@@ -9,15 +9,22 @@ interface POIOverlayProps {
   onReset: () => void;
   userLocation?: [number, number] | null;
   roadDistance?: number;
+  visitedPois?: string[];
+  onToggleVisited?: (poiId: string) => void;
 }
 
 export default function POIOverlay({
   selectedPois,
   onReset,
   userLocation = null,
-  roadDistance
+  roadDistance,
+  visitedPois = [],
+  onToggleVisited
 }: POIOverlayProps) {
   if (selectedPois.length === 0) return null;
+
+  const currentPoi = selectedPois[selectedPois.length - 1];
+  const isVisited = visitedPois.includes(currentPoi.id);
 
   let distance: string | null = null;
   let distanceLabel = 'Distance';
@@ -44,8 +51,7 @@ export default function POIOverlay({
   }
 
   const openInMaps = () => {
-    const poi = selectedPois[selectedPois.length - 1];
-    const url = `https://www.google.com/maps/search/?api=1&query=${poi.coordinates[0]},${poi.coordinates[1]}`;
+    const url = `https://www.google.com/maps/search/?api=1&query=${currentPoi.coordinates[0]},${currentPoi.coordinates[1]}`;
     window.open(url, '_blank');
   };
 
@@ -56,11 +62,24 @@ export default function POIOverlay({
         <div className="p-5 w-full max-w-md bg-[#1a1f2e]/95 backdrop-blur-2xl rounded-[32px] shadow-high pointer-events-auto border border-white/10 animate-in slide-in-from-bottom-8 duration-500 min-h-[140px] flex flex-col gap-3">
           <div className="flex justify-between items-start gap-4 mb-auto">
             <div className="flex-1">
-              <span className="text-[10px] font-bold text-primary tracking-widest uppercase mb-1 block">
-                Punto Selezionato
-              </span>
+              <div className="flex items-center gap-2 mb-1 justify-between">
+                <span className="text-[10px] font-bold text-primary tracking-widest uppercase block">
+                  Punto Selezionato
+                </span>
+                {onToggleVisited && selectedPois.length === 1 && (
+                  <button
+                    onClick={() => onToggleVisited(currentPoi.id)}
+                    className={`border p-1 rounded-full transition-all active:scale-90 ${isVisited ? 'bg-green-500/20 text-green-400 border-green-400' : 'bg-white/5 text-blue-400 border-blue-400'
+                      }`}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                )}
+              </div>
               <h2 className="text-xl font-bold text-white tracking-tight leading-tight">
-                {selectedPois[selectedPois.length - 1].name}
+                {currentPoi.name}
               </h2>
             </div>
 
@@ -80,7 +99,7 @@ export default function POIOverlay({
                 onClick={onReset}
                 className="flex-1 py-3.5 px-4 bg-white/5 hover:bg-white/10 text-white/80 text-xs font-bold tracking-widest uppercase rounded-2xl border border-white/10 transition-all active:scale-[0.98]"
               >
-                Cancella
+                Annulla
               </button>
               <button
                 onClick={openInMaps}

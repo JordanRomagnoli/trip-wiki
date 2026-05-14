@@ -4,6 +4,7 @@ export type POI = {
   description: string;
   coordinates: [number, number];
   category: 'our-places' | 'culture' | 'nature' | 'food' | 'disco';
+  visited?: boolean;
 };
 
 export type City = {

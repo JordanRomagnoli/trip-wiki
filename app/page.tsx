@@ -37,8 +37,28 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [routeData, setRouteData] = useState<{ coordinates: [number, number][]; distance: number } | null>(null);
   const [hideOthersEnabled, setHideOthersEnabled] = useState(true);
+  const [visitedPois, setVisitedPois] = useState<string[]>([]);
 
   const currentCity = CITIES.find((c) => c.id === currentCityId) || CITIES[0];
+
+  // Load visited POIs from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('visitedPois');
+    if (saved) {
+      setVisitedPois(JSON.parse(saved));
+    }
+  }, []);
+
+  // Save visited POIs to localStorage
+  useEffect(() => {
+    localStorage.setItem('visitedPois', JSON.stringify(visitedPois));
+  }, [visitedPois]);
+
+  const toggleVisited = (poiId: string) => {
+    setVisitedPois(prev => 
+      prev.includes(poiId) ? prev.filter(id => id !== poiId) : [...prev, poiId]
+    );
+  };
 
   // Filter POIs based on selected category and selection count
   const filteredCity = {
@@ -198,6 +218,7 @@ export default function Home() {
           theme={mapTheme}
           userLocation={userLocation}
           routePoints={routeData?.coordinates}
+          visitedPois={visitedPois}
         />
       </div>
 
@@ -210,6 +231,8 @@ export default function Home() {
         }}
         userLocation={userLocation}
         roadDistance={routeData?.distance}
+        visitedPois={visitedPois}
+        onToggleVisited={toggleVisited}
       />
 
     </main>

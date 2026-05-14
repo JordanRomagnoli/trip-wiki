@@ -6,17 +6,21 @@ import L from 'leaflet';
 import { City, POI } from '@/lib/data';
 
 // Fix for default marker icons in Leaflet with Next.js
-const createCustomIcon = (color: string, label: string) => {
+const createCustomIcon = (color: string, label: string, isVisited: boolean = false) => {
+  const finalColor = isVisited ? '#94a3b8' : color; // Gray-ish slate color for visited
+  const opacity = isVisited ? '0.6' : '1';
+  const grayscale = isVisited ? 'filter: grayscale(100%);' : '';
+
   return L.divIcon({
     html: `
-      <div class="flex flex-col items-center">
+      <div class="flex flex-col items-center" style="opacity: ${opacity}; ${grayscale}">
         <div style="
           width: 24px;
           height: 24px;
-          border: 3px solid ${color};
+          border: 3px solid ${finalColor};
           border-radius: 50%;
           background: rgba(255,255,255,0.9);
-          box-shadow: 0 0 15px ${color};
+          box-shadow: 0 0 15px ${isVisited ? 'rgba(148,163,184,0.3)' : finalColor};
           position: relative;
         ">
           <div style="
@@ -26,13 +30,13 @@ const createCustomIcon = (color: string, label: string) => {
             transform: translate(-50%, -50%);
             width: 8px;
             height: 8px;
-            background: ${color};
+            background: ${finalColor};
             border-radius: 50%;
           "></div>
         </div>
         <div style="
           margin-top: 8px;
-          background: rgba(26, 31, 46, 0.9);
+          background: ${isVisited ? 'rgba(71, 85, 105, 0.9)' : 'rgba(26, 31, 46, 0.9)'};
           padding: 4px 12px;
           border-radius: 12px;
           color: white;
@@ -74,6 +78,7 @@ interface MapComponentProps {
   theme?: 'light' | 'dark';
   userLocation?: [number, number] | null;
   routePoints?: [number, number][];
+  visitedPois?: string[];
 }
 
 const userLocationIcon = L.divIcon({
@@ -102,13 +107,14 @@ function MapEffect({ userLocation }: { userLocation: [number, number] | null }) 
   return null;
 }
 
-export default function MapComponent({ 
-  city, 
-  selectedPois, 
-  onPoiClick, 
-  theme = 'dark', 
+export default function MapComponent({
+  city,
+  selectedPois,
+  onPoiClick,
+  theme = 'dark',
   userLocation = null,
-  routePoints
+  routePoints,
+  visitedPois,
 }: MapComponentProps) {
   return (
     <div className="w-full h-full relative">
@@ -120,7 +126,7 @@ export default function MapComponent({
       >
         <ChangeView center={city.center} zoom={city.zoom} />
         <MapEffect userLocation={userLocation} />
-        
+
         {theme === 'dark' ? (
           <TileLayer
             key="dark-tiles"
@@ -146,23 +152,30 @@ export default function MapComponent({
           </Marker>
         )}
 
-        {city.pois.map((poi) => (
-          <Marker
-            key={poi.id}
-            position={poi.coordinates}
-            icon={createCustomIcon(categoryColors[poi.category as keyof typeof categoryColors] || '#3b82f6', poi.name)}
-            eventHandlers={{
-              click: () => onPoiClick(poi),
-            }}
-          >
-            <Popup className="premium-popup">
-              <div className="p-1">
-                <h3 className="font-bold text-primary">{poi.name}</h3>
-                <p className="text-xs text-tertiary mt-1">{poi.description}</p>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+        {city.pois.map((poi) => {
+          const isVisited = visitedPois?.includes(poi.id);
+          return (
+            <Marker
+              key={poi.id}
+              position={poi.coordinates}
+              icon={createCustomIcon(
+                categoryColors[poi.category as keyof typeof categoryColors] || '#3b82f6',
+                poi.name,
+                isVisited
+              )}
+              eventHandlers={{
+                click: () => onPoiClick(poi),
+              }}
+            >
+              <Popup className="premium-popup">
+                <div className="p-1">
+                  <h3 className="font-bold text-primary">{poi.name}</h3>
+                  <p className="text-xs text-tertiary mt-1">{poi.description}</p>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
 
         {/* Road Route Polyline */}
         {routePoints && (
@@ -179,6 +192,7 @@ export default function MapComponent({
         {/* Fallback Straight Lines (only if no routePoints) */}
         {!routePoints && selectedPois.length === 2 && (
           <Polyline
+            className='animate-pulse'
             positions={[selectedPois[0].coordinates, selectedPois[1].coordinates]}
             color={theme === 'dark' ? "#3b82f6" : "#2563eb"}
             dashArray="10, 10"
