@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { CITIES, City, POI } from '@/lib/data';
 import CitySwitcher from '@/components/CitySwitcher';
 import POIOverlay from '@/components/POIOverlay';
+import { getRoute } from '@/lib/utils';
 
 // Load MapComponent dynamically to avoid SSR issues with Leaflet
 const MapComponent = dynamic(() => import('@/components/MapComponent'), {
@@ -34,6 +35,7 @@ export default function Home() {
   const [mapTheme, setMapTheme] = useState<'light' | 'dark'>('light');
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [routeData, setRouteData] = useState<{ coordinates: [number, number][]; distance: number } | null>(null);
 
   const currentCity = CITIES.find((c) => c.id === currentCityId) || CITIES[0];
 
@@ -44,6 +46,21 @@ export default function Home() {
       selectedCategory === 'all' || poi.category === selectedCategory
     )
   };
+
+  useEffect(() => {
+    async function updateRoute() {
+      if (selectedPois.length === 2) {
+        const route = await getRoute(selectedPois[0].coordinates, selectedPois[1].coordinates);
+        setRouteData(route);
+      } else if (selectedPois.length === 1 && userLocation) {
+        const route = await getRoute(userLocation, selectedPois[0].coordinates);
+        setRouteData(route);
+      } else {
+        setRouteData(null);
+      }
+    }
+    updateRoute();
+  }, [selectedPois, userLocation]);
 
   const handleCityChange = (cityId: string) => {
     setCurrentCityId(cityId);
@@ -105,7 +122,7 @@ export default function Home() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-[#1e293b] text-white/80 text-xs font-bold py-2 px-3 rounded-full border-none outline-none focus:ring-2 focus:ring-primary/50 transition-all cursor-pointer appearance-none pr-8 relative"
+              className="bg-[#1e293b] text-white/80 text-xs font-bold py-3 px-3 rounded-full border-none outline-none focus:ring-2 focus:ring-primary/50 transition-all cursor-pointer appearance-none pr-8 relative"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                 backgroundRepeat: 'no-repeat',
@@ -158,6 +175,7 @@ export default function Home() {
           onPoiClick={handlePoiClick}
           theme={mapTheme}
           userLocation={userLocation}
+          routePoints={routeData?.coordinates}
         />
       </div>
 
@@ -169,6 +187,7 @@ export default function Home() {
           setUserLocation(null);
         }}
         userLocation={userLocation}
+        roadDistance={routeData?.distance}
       />
 
     </main>

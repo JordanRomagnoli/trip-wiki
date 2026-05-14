@@ -73,6 +73,7 @@ interface MapComponentProps {
   onPoiClick: (poi: POI) => void;
   theme?: 'light' | 'dark';
   userLocation?: [number, number] | null;
+  routePoints?: [number, number][];
 }
 
 const userLocationIcon = L.divIcon({
@@ -101,7 +102,14 @@ function MapEffect({ userLocation }: { userLocation: [number, number] | null }) 
   return null;
 }
 
-export default function MapComponent({ city, selectedPois, onPoiClick, theme = 'dark', userLocation = null }: MapComponentProps) {
+export default function MapComponent({ 
+  city, 
+  selectedPois, 
+  onPoiClick, 
+  theme = 'dark', 
+  userLocation = null,
+  routePoints
+}: MapComponentProps) {
   return (
     <div className="w-full h-full relative">
       <MapContainer
@@ -156,7 +164,20 @@ export default function MapComponent({ city, selectedPois, onPoiClick, theme = '
           </Marker>
         ))}
 
-        {selectedPois.length === 2 && (
+        {/* Road Route Polyline */}
+        {routePoints && (
+          <Polyline
+            positions={routePoints}
+            color="#3b82f6"
+            weight={5}
+            opacity={0.8}
+            lineCap="round"
+            lineJoin="round"
+          />
+        )}
+
+        {/* Fallback Straight Lines (only if no routePoints) */}
+        {!routePoints && selectedPois.length === 2 && (
           <Polyline
             positions={[selectedPois[0].coordinates, selectedPois[1].coordinates]}
             color={theme === 'dark' ? "#3b82f6" : "#2563eb"}
@@ -166,7 +187,7 @@ export default function MapComponent({ city, selectedPois, onPoiClick, theme = '
           />
         )}
 
-        {selectedPois.length === 1 && userLocation && (
+        {!routePoints && selectedPois.length === 1 && userLocation && (
           <Polyline
             positions={[userLocation, selectedPois[0].coordinates]}
             color="#3b82f6"
