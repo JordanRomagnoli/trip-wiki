@@ -36,15 +36,21 @@ export default function Home() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [routeData, setRouteData] = useState<{ coordinates: [number, number][]; distance: number } | null>(null);
+  const [hideOthersEnabled, setHideOthersEnabled] = useState(true);
 
   const currentCity = CITIES.find((c) => c.id === currentCityId) || CITIES[0];
 
-  // Filter POIs based on selected category
+  // Filter POIs based on selected category and selection count
   const filteredCity = {
     ...currentCity,
-    pois: currentCity.pois.filter(poi =>
-      selectedCategory === 'all' || poi.category === selectedCategory
-    )
+    pois: currentCity.pois.filter(poi => {
+      // If 2 POIs are selected and focus mode is enabled, only show those two
+      if (hideOthersEnabled && selectedPois.length === 2) {
+        return selectedPois.some(p => p.id === poi.id);
+      }
+      // Otherwise, filter by category
+      return selectedCategory === 'all' || poi.category === selectedCategory;
+    })
   };
 
   useEffect(() => {
@@ -121,7 +127,10 @@ export default function Home() {
           <div className="mr-2">
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value)
+                setSelectedPois([])
+              }}
               className="bg-[#1e293b] text-white/80 text-xs font-bold py-3 px-3 rounded-full border-none outline-none focus:ring-2 focus:ring-primary/50 transition-all cursor-pointer appearance-none pr-8 relative"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
@@ -165,6 +174,19 @@ export default function Home() {
             </svg>
           )}
         </button>
+        {selectedPois.length === 2 && (
+          <button
+            onClick={() => setHideOthersEnabled(!hideOthersEnabled)}
+            className={`w-12 h-12 rounded-full backdrop-blur-xl border border-white/5 shadow-high flex items-center justify-center pointer-events-auto active:scale-95 transition-all ${hideOthersEnabled ? 'bg-primary text-white' : 'bg-[#1a1f2e]/90 text-white/40'
+              }`}
+            title={hideOthersEnabled ? "Disable Focus Mode" : "Enable Focus Mode"}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Map */}
