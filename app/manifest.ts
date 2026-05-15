@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Your premium geospatial travel guide',
     start_url: '/',
     display: 'standalone',
-    background_color: '#1a1f2e',
-    theme_color: '#3b82f6',
+    background_color: '#000000',
+    theme_color: '#ccff00',
     icons: [
       {
         src: '/icon.svg',

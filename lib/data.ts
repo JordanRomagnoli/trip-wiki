@@ -7,12 +7,19 @@ export type POI = {
   visited?: boolean;
 };
 
+export type Itinerary = {
+  id: string;
+  name: string;
+  poiIds: string[]; // ordered list of POI IDs
+};
+
 export type City = {
   id: string;
   name: string;
   center: [number, number];
   zoom: number;
   pois: POI[];
+  itineraries?: Itinerary[];
 };
 
 export const CITIES: City[] = [
@@ -21,6 +28,23 @@ export const CITIES: City[] = [
     name: 'Valencia',
     center: [39.4699, -0.3763],
     zoom: 13,
+    itineraries: [
+      {
+        id: 'valencia-1',
+        name: 'Cultural Day',
+        poiIds: ['v15', 'v23', 'v25', 'v31', 'v10']
+      },
+      {
+        id: 'valencia-2',
+        name: 'Nature & Relax',
+        poiIds: ['v9', 'v16', 'v14']
+      },
+      {
+        id: 'valencia-3',
+        name: 'Night Out',
+        poiIds: ['v20', 'v34', 'v39', 'v26']
+      }
+    ],
     pois: [
       {
         id: 'v1',
@@ -351,6 +375,18 @@ export const CITIES: City[] = [
     name: 'Ibiza',
     center: [38.9067, 1.4358],
     zoom: 12,
+    itineraries: [
+      {
+        id: 'ibiza-1',
+        name: 'Party All Night',
+        poiIds: ['i1', 'i2', 'i6']
+      },
+      {
+        id: 'ibiza-2',
+        name: 'Beaches & Nature',
+        poiIds: ['i3', 'i5', 'i4']
+      }
+    ],
     pois: [
       {
         id: 'i1',
