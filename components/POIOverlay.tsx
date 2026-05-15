@@ -59,7 +59,7 @@ export default function POIOverlay({
     <div className="fixed bottom-6 left-4 right-4 z-[1000] flex flex-col items-center pointer-events-none">
       {/* POI Info Card */}
       {selectedPois.length > 0 && (
-        <div className="p-5 w-full max-w-md bg-[#1a1f2e]/95 backdrop-blur-2xl rounded-[32px] shadow-high pointer-events-auto border border-white/10 animate-in slide-in-from-bottom-8 duration-500 min-h-[140px] flex flex-col gap-3">
+        <div className="p-5 w-full max-w-md bg-background/95 backdrop-blur-2xl rounded-[32px] shadow-high pointer-events-auto border border-outline animate-in slide-in-from-bottom-8 duration-500 min-h-[140px] flex flex-col gap-3">
           <div className="flex justify-between items-start gap-4 mb-auto">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1 justify-between">
@@ -69,7 +69,7 @@ export default function POIOverlay({
                 {onToggleVisited && selectedPois.length === 1 && (
                   <button
                     onClick={() => onToggleVisited(currentPoi.id)}
-                    className={`border p-1 rounded-full transition-all active:scale-90 ${isVisited ? 'bg-green-500/20 text-green-400 border-green-400' : 'bg-white/5 text-blue-400 border-blue-400'
+                    className={`border p-1 rounded-full transition-all active:scale-90 ${isVisited ? 'bg-green-500/20 text-green-400 border-green-400' : 'bg-white/5 text-[#ccff00] border-[#ccff00]'
                       }`}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,14 +78,14 @@ export default function POIOverlay({
                   </button>
                 )}
               </div>
-              <h2 className="text-xl font-bold text-white tracking-tight leading-tight">
+              <h2 className="text-xl font-bold text-foreground tracking-tight leading-tight">
                 {currentPoi.name}
               </h2>
             </div>
 
             {distance && (
               <div className="text-right shrink-0">
-                <div className="text-2xl font-bold text-white font-mono leading-none">
+                <div className="text-2xl font-bold text-foreground font-mono leading-none">
                   {distance} <span className="text-sm font-medium opacity-60">km</span>
                 </div>
                 <span className="text-[10px] text-primary/70 font-bold uppercase tracking-wider">{distanceLabel}</span>
@@ -97,13 +97,13 @@ export default function POIOverlay({
             <div className="flex gap-3 mt-6">
               <button
                 onClick={onReset}
-                className="flex-1 py-3.5 px-4 bg-white/5 hover:bg-white/10 text-white/80 text-xs font-bold tracking-widest uppercase rounded-2xl border border-white/10 transition-all active:scale-[0.98]"
+                className="flex-1 py-3.5 px-4 bg-white/5 hover:bg-white/10 text-foreground/80 text-xs font-bold tracking-widest uppercase rounded-2xl border border-outline transition-all active:scale-[0.98]"
               >
                 Annulla
               </button>
               <button
                 onClick={openInMaps}
-                className="flex-[0.5] py-3.5 px-4 bg-blue-400/10 border border-primary text-white flex items-center justify-center gap-2 rounded-2xl shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:brightness-110 active:scale-[0.98] transition-all"
+                className="flex-[0.5] py-3.5 px-4 bg-[#ccff00]/10 border border-primary text-foreground flex items-center justify-center gap-2 rounded-2xl shadow-[0_0_20px_rgba(204,255,0,0.3)] hover:brightness-110 active:scale-[0.98] transition-all"
               >
                 <MapsLogo className="w-5 h-5" />
               </button>
@@ -111,7 +111,7 @@ export default function POIOverlay({
           ) : (
             <button
               onClick={onReset}
-              className="w-full mt-6 py-3.5 px-4 bg-primary text-white text-xs font-bold tracking-widest uppercase rounded-2xl shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:brightness-110 active:scale-[0.98] transition-all"
+              className="w-full mt-6 py-3.5 px-4 bg-[#ccff00]/10 border border-primary text-foreground text-xs font-bold tracking-widest uppercase rounded-2xl shadow-[0_0_20px_rgba(204,255,0,0.3)] hover:brightness-110 active:scale-[0.98] transition-all"
             >
               Calcola una nuova Distanza
             </button>

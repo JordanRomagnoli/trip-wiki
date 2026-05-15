@@ -38,6 +38,8 @@ export default function Home() {
   const [routeData, setRouteData] = useState<{ coordinates: [number, number][]; distance: number } | null>(null);
   const [hideOthersEnabled, setHideOthersEnabled] = useState(true);
   const [visitedPois, setVisitedPois] = useState<string[]>([]);
+  const [selectedItineraryId, setSelectedItineraryId] = useState<string | null>(null);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   const currentCity = CITIES.find((c) => c.id === currentCityId) || CITIES[0];
 
@@ -55,7 +57,7 @@ export default function Home() {
   }, [visitedPois]);
 
   const toggleVisited = (poiId: string) => {
-    setVisitedPois(prev => 
+    setVisitedPois(prev =>
       prev.includes(poiId) ? prev.filter(id => id !== poiId) : [...prev, poiId]
     );
   };
@@ -68,10 +70,30 @@ export default function Home() {
       if (hideOthersEnabled && selectedPois.length === 2) {
         return selectedPois.some(p => p.id === poi.id);
       }
+
+      // If itinerary is selected, filter by itinerary POIs
+      if (selectedItineraryId) {
+        const itinerary = currentCity.itineraries?.find(i => i.id === selectedItineraryId);
+        if (itinerary) {
+          return itinerary.poiIds.includes(poi.id);
+        }
+      }
+
       // Otherwise, filter by category
       return selectedCategory === 'all' || poi.category === selectedCategory;
     })
   };
+
+  let poiOrder: Record<string, number> | undefined;
+  if (selectedItineraryId) {
+    const itinerary = currentCity.itineraries?.find(i => i.id === selectedItineraryId);
+    if (itinerary) {
+      poiOrder = {};
+      itinerary.poiIds.forEach((id, index) => {
+        poiOrder![id] = index + 1;
+      });
+    }
+  }
 
   useEffect(() => {
     async function updateRoute() {
@@ -92,6 +114,7 @@ export default function Home() {
     setCurrentCityId(cityId);
     setSelectedPois([]); // Reset selection when changing city
     setSelectedCategory('all'); // Reset filter
+    setSelectedItineraryId(null);
   };
 
   const handleLocateUser = () => {
@@ -133,36 +156,27 @@ export default function Home() {
 
       {/* Top Bar / Search */}
       <div className="fixed top-6 left-4 right-4 z-[1000] pointer-events-none flex flex-col items-center gap-3">
-        <div className="w-full max-w-md bg-[#1a1f2e]/80 backdrop-blur-xl rounded-full shadow-high p-1.5 flex items-center gap-3 pointer-events-auto border border-white/5">
-          <div className="w-10 h-10 rounded-full bg-[#1e293b] flex items-center justify-center text-primary shadow-sm ml-0.5">
+        <div className="w-full max-w-md bg-background/80 backdrop-blur-xl rounded-full shadow-high p-1.5 flex items-center gap-3 pointer-events-auto border border-outline">
+          <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-primary shadow-sm ml-0.5">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
           <div className="flex-1 cursor-pointer" onClick={() => handleCityChange(currentCityId === 'valencia' ? 'ibiza' : 'valencia')}>
-            <h2 className="text-xl font-bold text-white tracking-tight">{currentCity.name}</h2>
+            <h2 className="text-xl font-bold text-foreground tracking-tight">{currentCity.name}</h2>
           </div>
 
           <div className="mr-2">
-            <select
-              value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value)
-                setSelectedPois([])
-              }}
-              className="bg-[#1e293b] text-white/80 text-xs font-bold py-3 px-3 rounded-full border-none outline-none focus:ring-2 focus:ring-primary/50 transition-all cursor-pointer appearance-none pr-8 relative"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 0.75rem center',
-                backgroundSize: '1rem'
-              }}
+            <button
+              onClick={() => setIsFilterModalOpen(true)}
+              className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-foreground/80 hover:text-foreground transition-colors"
+              title="Filters"
             >
-              {CATEGORIES.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.label}</option>
-              ))}
-            </select>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -171,7 +185,7 @@ export default function Home() {
       <div className="fixed right-4 top-1/2 -translate-y-1/2 z-[1000] flex flex-col gap-3 pointer-events-none">
         <button
           onClick={handleLocateUser}
-          className="w-12 h-12 rounded-full bg-[#1a1f2e]/90 backdrop-blur-xl border border-white/5 shadow-high flex items-center justify-center text-white pointer-events-auto active:scale-95 transition-transform"
+          className="w-12 h-12 rounded-full bg-background/90 backdrop-blur-xl border border-outline shadow-high flex items-center justify-center text-foreground pointer-events-auto active:scale-95 transition-transform"
           title="My Location"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,7 +195,7 @@ export default function Home() {
         </button>
         <button
           onClick={() => setMapTheme(mapTheme === 'dark' ? 'light' : 'dark')}
-          className="w-12 h-12 rounded-full bg-[#1a1f2e]/90 backdrop-blur-xl border border-white/5 shadow-high flex items-center justify-center text-white pointer-events-auto active:scale-95 transition-transform"
+          className="w-12 h-12 rounded-full bg-background/90 backdrop-blur-xl border border-outline shadow-high flex items-center justify-center text-foreground pointer-events-auto active:scale-95 transition-transform"
           title="Toggle Map Theme"
         >
           {mapTheme === 'dark' ? (
@@ -197,7 +211,7 @@ export default function Home() {
         {selectedPois.length === 2 && (
           <button
             onClick={() => setHideOthersEnabled(!hideOthersEnabled)}
-            className={`w-12 h-12 rounded-full backdrop-blur-xl border border-white/5 shadow-high flex items-center justify-center pointer-events-auto active:scale-95 transition-all ${hideOthersEnabled ? 'bg-primary text-white' : 'bg-[#1a1f2e]/90 text-white/40'
+            className={`w-12 h-12 rounded-full backdrop-blur-xl border flex items-center justify-center pointer-events-auto active:scale-95 transition-all ${hideOthersEnabled ? 'bg-primary border-primary text-[#181818] shadow-[0_0_20px_rgba(204,255,0,0.4)]' : 'bg-background/90 border-outline text-tertiary shadow-high'
               }`}
             title={hideOthersEnabled ? "Disable Focus Mode" : "Enable Focus Mode"}
           >
@@ -219,6 +233,7 @@ export default function Home() {
           userLocation={userLocation}
           routePoints={routeData?.coordinates}
           visitedPois={visitedPois}
+          poiOrder={poiOrder}
         />
       </div>
 
@@ -234,6 +249,91 @@ export default function Home() {
         visitedPois={visitedPois}
         onToggleVisited={toggleVisited}
       />
+
+      {/* Filter Modal */}
+      {isFilterModalOpen && (
+        <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+          <div className="bg-background border border-outline rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 mb-2 sm:mb-0">
+            <div className="flex items-center justify-between p-5 border-b border-outline">
+              <h3 className="text-xl font-bold text-foreground">Filters</h3>
+              <button
+                onClick={() => setIsFilterModalOpen(false)}
+                className="text-foreground/50 hover:text-foreground transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-5 flex flex-col gap-6">
+              {/* Category Filter */}
+              <div className='flex flex-col gap-3'>
+                <label className="block text-sm font-medium text-tertiary">Categories</label>
+                <div className="flex flex-wrap gap-2">
+                  {CATEGORIES.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        setSelectedCategory(cat.id);
+                        setSelectedItineraryId(null);
+                        setSelectedPois([]);
+                        setIsFilterModalOpen(false);
+                      }}
+                      className={`py-2 px-4 rounded-full text-sm font-medium transition-colors ${selectedCategory === cat.id && !selectedItineraryId
+                        ? 'bg-primary text-black'
+                        : 'bg-surface text-tertiary hover:bg-surface-container'
+                        }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Itinerary Filter */}
+              {currentCity.itineraries && currentCity.itineraries.length > 0 && (
+                <div className='flex flex-col gap-3'>
+                  <label className="block text-sm font-medium text-tertiary mb-3">Suggested Itineraries</label>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedItineraryId(null);
+                        setSelectedCategory('all');
+                        setSelectedPois([]);
+                        setIsFilterModalOpen(false);
+                      }}
+                      className={`py-3 px-4 rounded-xl text-sm font-medium transition-colors text-left ${!selectedItineraryId && selectedCategory === 'all'
+                        ? 'bg-primary text-black'
+                        : 'bg-surface text-tertiary hover:bg-surface-container'
+                        }`}
+                    >
+                      Explore freely (No itinerary)
+                    </button>
+                    {currentCity.itineraries.map(it => (
+                      <button
+                        key={it.id}
+                        onClick={() => {
+                          setSelectedItineraryId(it.id);
+                          setSelectedCategory('all');
+                          setSelectedPois([]);
+                          setIsFilterModalOpen(false);
+                        }}
+                        className={`py-3 px-4 rounded-xl text-sm font-medium transition-colors text-left ${selectedItineraryId === it.id
+                          ? 'bg-primary text-black'
+                          : 'bg-surface text-tertiary hover:bg-surface-container'
+                          }`}
+                      >
+                        {it.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </main>
   );

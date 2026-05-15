@@ -6,10 +6,14 @@ import L from 'leaflet';
 import { City, POI } from '@/lib/data';
 
 // Fix for default marker icons in Leaflet with Next.js
-const createCustomIcon = (color: string, label: string, isVisited: boolean = false) => {
+const createCustomIcon = (color: string, label: string, isVisited: boolean = false, orderNumber?: number) => {
   const finalColor = isVisited ? '#94a3b8' : color; // Gray-ish slate color for visited
   const opacity = isVisited ? '0.6' : '1';
   const grayscale = isVisited ? 'filter: grayscale(100%);' : '';
+
+  const innerContent = orderNumber !== undefined 
+    ? `<span style="color: ${finalColor}; font-weight: bold; font-size: 14px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">${orderNumber}</span>`
+    : `<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; background: ${finalColor}; border-radius: 50%;"></div>`;
 
   return L.divIcon({
     html: `
@@ -23,16 +27,7 @@ const createCustomIcon = (color: string, label: string, isVisited: boolean = fal
           box-shadow: 0 0 15px ${isVisited ? 'rgba(148,163,184,0.3)' : finalColor};
           position: relative;
         ">
-          <div style="
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 8px;
-            height: 8px;
-            background: ${finalColor};
-            border-radius: 50%;
-          "></div>
+          ${innerContent}
         </div>
         <div style="
           margin-top: 8px;
@@ -79,18 +74,20 @@ interface MapComponentProps {
   userLocation?: [number, number] | null;
   routePoints?: [number, number][];
   visitedPois?: string[];
+  poiOrder?: Record<string, number>;
 }
 
 const userLocationIcon = L.divIcon({
   html: `
     <div class="relative flex items-center justify-center">
-      <div class="absolute w-8 h-8 bg-blue-500/30 rounded-full animate-ping"></div>
-      <div class="relative w-4 h-4 bg-blue-600 border-2 border-white rounded-full shadow-lg"></div>
+      <div class="absolute w-12 h-12 bg-[#ccff00]/20 rounded-full animate-ping"></div>
+      <div class="absolute w-6 h-6 bg-[#ccff00]/40 rounded-full animate-pulse"></div>
+      <div class="relative w-4 h-4 bg-[#ccff00] border-2 border-[#121212] rounded-full shadow-[0_0_15px_rgba(204,255,0,0.8)]"></div>
     </div>
   `,
   className: 'user-location-marker',
-  iconSize: [32, 32],
-  iconAnchor: [16, 16],
+  iconSize: [48, 48],
+  iconAnchor: [24, 24],
 });
 
 function MapEffect({ userLocation }: { userLocation: [number, number] | null }) {
@@ -115,6 +112,7 @@ export default function MapComponent({
   userLocation = null,
   routePoints,
   visitedPois,
+  poiOrder,
 }: MapComponentProps) {
   return (
     <div className="w-full h-full relative">
@@ -122,7 +120,7 @@ export default function MapComponent({
         center={city.center}
         zoom={city.zoom}
         zoomControl={false}
-        className={`w-full h-full transition-colors duration-500 ${theme === 'dark' ? 'bg-[#0d0f14]' : 'bg-[#f8f9fa]'}`}
+        className={`w-full h-full transition-colors duration-500 ${theme === 'dark' ? 'bg-background' : 'bg-[#f8f9fa]'}`}
       >
         <ChangeView center={city.center} zoom={city.zoom} />
         <MapEffect userLocation={userLocation} />
@@ -146,7 +144,7 @@ export default function MapComponent({
           <Marker position={userLocation} icon={userLocationIcon} zIndexOffset={1000}>
             <Popup>
               <div className="p-1">
-                <p className="font-bold text-blue-600">You are here</p>
+                <p className="font-bold text-[#ccff00]">You are here</p>
               </div>
             </Popup>
           </Marker>
@@ -154,14 +152,16 @@ export default function MapComponent({
 
         {city.pois.map((poi) => {
           const isVisited = visitedPois?.includes(poi.id);
+          const orderNumber = poiOrder ? poiOrder[poi.id] : undefined;
           return (
             <Marker
               key={poi.id}
               position={poi.coordinates}
               icon={createCustomIcon(
-                categoryColors[poi.category as keyof typeof categoryColors] || '#3b82f6',
+                categoryColors[poi.category as keyof typeof categoryColors] || '#ccff00',
                 poi.name,
-                isVisited
+                isVisited,
+                orderNumber
               )}
               eventHandlers={{
                 click: () => onPoiClick(poi),
@@ -169,7 +169,7 @@ export default function MapComponent({
             >
               <Popup className="premium-popup">
                 <div className="p-1">
-                  <h3 className="font-bold text-primary">{poi.name}</h3>
+                  <h3 className="font-bold text-black">{poi.name}</h3>
                   <p className="text-xs text-tertiary mt-1">{poi.description}</p>
                 </div>
               </Popup>
@@ -177,13 +177,35 @@ export default function MapComponent({
           );
         })}
 
-        {/* Road Route Polyline */}
+        {/* Road Route Polyline Dark Outline */}
         {routePoints && (
           <Polyline
             positions={routePoints}
-            color="#3b82f6"
-            weight={5}
-            opacity={0.8}
+            color="#000000"
+            weight={10}
+            opacity={0.6}
+            lineCap="round"
+            lineJoin="round"
+          />
+        )}
+        {/* Road Route Polyline Glow */}
+        {routePoints && (
+          <Polyline
+            positions={routePoints}
+            color="#ccff00"
+            weight={18}
+            opacity={0.3}
+            lineCap="round"
+            lineJoin="round"
+          />
+        )}
+        {/* Road Route Polyline Core */}
+        {routePoints && (
+          <Polyline
+            positions={routePoints}
+            color="#ccff00"
+            weight={6}
+            opacity={1}
             lineCap="round"
             lineJoin="round"
           />
@@ -191,24 +213,58 @@ export default function MapComponent({
 
         {/* Fallback Straight Lines (only if no routePoints) */}
         {!routePoints && selectedPois.length === 2 && (
-          <Polyline
-            className='animate-pulse'
-            positions={[selectedPois[0].coordinates, selectedPois[1].coordinates]}
-            color={theme === 'dark' ? "#3b82f6" : "#2563eb"}
-            dashArray="10, 10"
-            weight={3}
-            opacity={0.8}
-          />
+          <>
+            <Polyline
+              className='animate-pulse'
+              positions={[selectedPois[0].coordinates, selectedPois[1].coordinates]}
+              color="#000000"
+              dashArray="10, 15"
+              weight={10}
+              opacity={0.6}
+            />
+            <Polyline
+              className='animate-pulse'
+              positions={[selectedPois[0].coordinates, selectedPois[1].coordinates]}
+              color={theme === 'dark' ? "#ccff00" : "#a3cc00"}
+              dashArray="10, 15"
+              weight={14}
+              opacity={0.3}
+            />
+            <Polyline
+              className='animate-pulse'
+              positions={[selectedPois[0].coordinates, selectedPois[1].coordinates]}
+              color={theme === 'dark' ? "#ccff00" : "#a3cc00"}
+              dashArray="10, 15"
+              weight={5}
+              opacity={1}
+            />
+          </>
         )}
 
         {!routePoints && selectedPois.length === 1 && userLocation && (
-          <Polyline
-            positions={[userLocation, selectedPois[0].coordinates]}
-            color="#3b82f6"
-            dashArray="10, 10"
-            weight={2}
-            opacity={0.6}
-          />
+          <>
+            <Polyline
+              positions={[userLocation, selectedPois[0].coordinates]}
+              color="#000000"
+              dashArray="10, 15"
+              weight={10}
+              opacity={0.6}
+            />
+            <Polyline
+              positions={[userLocation, selectedPois[0].coordinates]}
+              color="#ccff00"
+              dashArray="10, 15"
+              weight={14}
+              opacity={0.3}
+            />
+            <Polyline
+              positions={[userLocation, selectedPois[0].coordinates]}
+              color="#ccff00"
+              dashArray="10, 15"
+              weight={5}
+              opacity={1}
+            />
+          </>
         )}
       </MapContainer>
     </div>
