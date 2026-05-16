@@ -1,26 +1,4 @@
-export type POI = {
-  id: string;
-  name: string;
-  description: string;
-  coordinates: [number, number];
-  category: 'our-places' | 'culture' | 'nature' | 'food' | 'disco';
-  visited?: boolean;
-};
-
-export type Itinerary = {
-  id: string;
-  name: string;
-  poiIds: string[]; // ordered list of POI IDs
-};
-
-export type City = {
-  id: string;
-  name: string;
-  center: [number, number];
-  zoom: number;
-  pois: POI[];
-  itineraries?: Itinerary[];
-};
+import { City, POI, Itinerary } from '../lib/types'
 
 export const CITIES: City[] = [
   {
@@ -331,6 +309,109 @@ export const CITIES: City[] = [
         category: 'our-places',
       },
 
+      //Ruzafa
+      {
+        id: 'v41',
+        name: 'Ubik Café',
+        description: "Libreria-café/bar culturale, molto Ruzafa, perfetto per colazione/aperitivo/eventi. Ho mangiato una torta cinnamon troppo buona.",
+        coordinates: [39.4624, -0.3722],
+        category: 'food',
+      },
+      {
+        id: 'v42',
+        name: 'Mercato Ruzafa',
+        description: "Mercato coperto di quartiere, food e vita local.",
+        coordinates: [39.4615, -0.3723],
+        category: 'food',
+      },
+      {
+        id: 'v43',
+        name: 'Iluziona Museo',
+        description: "Museo di illusioni ottiche/esperienze visive, più giocoso che culturale classico. 12€ biglietto",
+        coordinates: [39.46572501083425, -0.37267557554062314],
+        category: 'culture',
+      },
+      {
+        id: 'v44',
+        name: 'Parco Centrale',
+        description: "Grande parco urbano moderno vicino a Ruzafa e alla ferrovia.",
+        coordinates: [39.4574746719249, -0.37978705336109764],
+        category: 'nature',
+      },
+      {
+        id: 'v45',
+        name: 'Electropura',
+        description: "Cocktail bar/club con musica, vinili e progetti artistici in Ruzafa.",
+        coordinates: [39.4636812795007, -0.3709003128830869],
+        category: 'disco',
+      },
+      {
+        id: 'v46',
+        name: 'Bocadella Tapas',
+        description: "Tapas/eventi; attenzione: è verso Blasco/Università. 4.7.",
+        coordinates: [39.475642521571714, -0.3428928469721737],
+        category: 'food',
+      },
+      {
+        id: 'v47',
+        name: 'Matisse Club',
+        description: "Locale live/music club in zona Cedro/Algirós.",
+        coordinates: [39.4715, -0.3461],
+        category: 'disco',
+      },
+      {
+        id: 'v48',
+        name: 'Rumbo 144',
+        description: "Club/localino studentesco su Av. Blasco Ibáñez, zona universitaria.",
+        coordinates: [39.4720, -0.3430],
+        category: 'disco',
+      },
+      {
+        id: 'v49',
+        name: 'Apotheke Cocktail Bar',
+        description: "Speakeasy/cocktail bar elegante in zona Cánovas-Ruzafa. 4,5 su google specializzato in cocktail.",
+        coordinates: [39.4660, -0.3663],
+        category: 'disco',
+      },
+      {
+        id: 'v50',
+        name: 'The Jungle',
+        description: "Cocktail bar tropicale/tapas lounge in Carrer del Comte d’Altea. 4,9 su google.",
+        coordinates: [39.4664, -0.3656],
+        category: 'disco',
+      },
+
+      //Patraix
+      {
+        id: 'v51',
+        name: 'Stella Brutal',
+        description: "Ristorante/bar di quartiere in zona Patraix-Safranar, informale ma curato. Sembrava carino da maps e costa poco se una sera non vogliamo spendere troppo veniamo a bere qua. Stella brutal è una birra",
+        coordinates: [39.4587, -0.3971],
+        category: 'food',
+      },
+
+      //Lungo Turia / Città delle Arti
+      {
+        id: 'v52',
+        name: 'Palazzo della Musica / Palau de la Música',
+        description: "Auditorium importante sul Jardín del Turia, bello anche solo da fuori.",
+        coordinates: [39.4673, -0.3607],
+        category: 'culture',
+      },
+      {
+        id: 'v53',
+        name: 'Parco Gulliver',
+        description: "Parco-scultura gigante con scivoli: super iconico anche solo per foto.",
+        coordinates: [39.4617, -0.3605],
+        category: 'nature',
+      },
+      {
+        id: 'v54',
+        name: 'Palazzo delle Arti Reina Sofía',
+        description: "Opera house futuristica della Città delle Arti.",
+        coordinates: [39.4569, -0.3540],
+        category: 'culture',
+      },
 
 
       {

@@ -14,8 +14,8 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trip Wiki | Your Geospatial Guide",
-  description: "Explore cities and calculate routes with ease.",
+  title: "Trip Wiki | La guida di cou nessuno ha il bisogno",
+  description: "Eslora 2 città.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -45,10 +45,13 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="it"
       className={`${inter.variable} ${mono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }

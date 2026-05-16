@@ -1,6 +1,6 @@
 'use client';
 
-import { City } from '@/lib/data';
+import { City } from '@/lib/types';
 
 interface CitySwitcherProps {
   cities: City[];

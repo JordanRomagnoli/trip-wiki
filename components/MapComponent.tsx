@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
-import { City, POI } from '@/lib/data';
+import { City, POI } from '@/lib/types';
 
 // Fix for default marker icons in Leaflet with Next.js
 const createCustomIcon = (color: string, label: string, isVisited: boolean = false, orderNumber?: number) => {
@@ -144,7 +144,7 @@ export default function MapComponent({
           <Marker position={userLocation} icon={userLocationIcon} zIndexOffset={1000}>
             <Popup>
               <div className="p-1">
-                <p className="font-bold text-[#ccff00]">You are here</p>
+                <p className="font-bold text-[#ccff00]">Sei qui</p>
               </div>
             </Popup>
           </Marker>
