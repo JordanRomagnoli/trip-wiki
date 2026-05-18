@@ -1,4 +1,6 @@
+import { redirect } from 'next/navigation';
 import { poiController } from '@/lib/controllers/poiController';
+import { createClient } from '@/lib/supabase/server';
 import HomeClient from './HomeClient';
 
 /**
@@ -10,6 +12,13 @@ export default async function Home({
 }: {
   searchParams: Promise<{ category?: string; itinerary?: string }>;
 }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
   const { category, itinerary } = await searchParams;
 
   // Fetch initial data via the Controller (MVC)
@@ -18,5 +27,5 @@ export default async function Home({
     itineraryId: itinerary,
   });
 
-  return <HomeClient initialCities={initialCities} />;
+  return <HomeClient initialCities={initialCities} user={user} />;
 }

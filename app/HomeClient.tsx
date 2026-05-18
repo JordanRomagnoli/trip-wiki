@@ -4,11 +4,13 @@ import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { City, POI } from '@/lib/types';
+import { User } from '@supabase/supabase-js';
 import POIOverlay from '@/components/POIOverlay';
 import CreateItineraryModal from '@/components/CreateItineraryModal';
 import CreatePoiModal from '@/components/CreatePoiModal';
 import { getRoute } from '@/lib/utils';
-import { createItineraryAction, createPoiAction } from '@/lib/actions';
+import { createItineraryAction, createPoiAction, logoutAction } from '@/lib/actions';
+import { createClient } from '@/lib/supabase/client';
 
 // Load MapComponent dynamically to avoid SSR issues with Leaflet
 const MapComponent = dynamic(() => import('@/components/MapComponent'), {
@@ -34,11 +36,13 @@ const CATEGORIES = [
 
 interface HomeClientProps {
   initialCities: City[];
+  user?: User | null;
 }
 
-export default function HomeClient({ initialCities }: HomeClientProps) {
+export default function HomeClient({ initialCities, user }: HomeClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const supabase = createClient();
 
   const [currentCityId, setCurrentCityId] = useState(initialCities[0]?.id || 'valencia');
   const [selectedPois, setSelectedPois] = useState<POI[]>([]);
@@ -51,6 +55,7 @@ export default function HomeClient({ initialCities }: HomeClientProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isItineraryFormOpen, setIsItineraryFormOpen] = useState(false);
   const [isPoiFormOpen, setIsPoiFormOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const selectedCategory = searchParams.get('category') || 'all';
   const selectedItineraryId = searchParams.get('itinerary');
@@ -182,33 +187,68 @@ export default function HomeClient({ initialCities }: HomeClientProps) {
     }
   };
 
+  const handleLogout = async () => {
+    await logoutAction();
+  };
+
   return (
     <main className="relative w-screen h-screen overflow-hidden">
 
       {/* Top Bar / Search */}
-      <div className="fixed top-6 left-4 right-4 z-[1000] pointer-events-none flex flex-col items-center gap-3">
-        <div className="w-full max-w-md bg-background/80 backdrop-blur-xl rounded-full shadow-high p-1.5 flex items-center gap-3 pointer-events-auto border border-outline">
-          <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-primary shadow-sm ml-0.5">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          <div className="flex-1 cursor-pointer" onClick={() => handleCityChange(currentCityId === 'valencia' ? 'ibiza' : 'valencia')}>
-            <h2 className="text-xl font-bold text-foreground tracking-tight">{currentCity.name}</h2>
+      <div className="fixed top-6 left-4 right-4 z-[1000] pointer-events-none flex justify-center">
+        <div className="w-full max-w-lg flex items-center gap-3">
+          <div className="flex-1 bg-background/80 backdrop-blur-xl rounded-full shadow-high p-1.5 flex items-center gap-3 pointer-events-auto border border-outline">
+            <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-primary shadow-sm ml-0.5">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div className="flex-1 cursor-pointer" onClick={() => handleCityChange(currentCityId === 'valencia' ? 'ibiza' : 'valencia')}>
+              <h2 className="text-xl font-bold text-foreground tracking-tight">{currentCity.name}</h2>
+            </div>
+            
+            <div>
+              <button
+                onClick={() => setIsFilterModalOpen(true)}
+                className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-foreground/80 hover:text-foreground transition-colors"
+                title="Filtri"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+              </button>
+            </div>
           </div>
 
-          <div>
-            <button
-              onClick={() => setIsFilterModalOpen(true)}
-              className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-foreground/80 hover:text-foreground transition-colors"
-              title="Filtri"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-            </button>
-          </div>
+          {user && (
+            <div className="pointer-events-auto shrink-0 relative">
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="w-14 h-14 rounded-full bg-background/80 backdrop-blur-xl border border-outline shadow-high overflow-hidden flex items-center justify-center text-primary transition-transform hover:scale-105"
+                title="Profilo"
+              >
+                {user.user_metadata?.avatar_url ? (
+                  <img src={user.user_metadata.avatar_url} alt="User Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="font-bold text-lg">{user.email?.[0].toUpperCase()}</span>
+                )}
+              </button>
+              {isUserMenuOpen && (
+                <div className="absolute top-16 right-0 mt-2 w-48 bg-background border border-outline rounded-xl shadow-high py-2 flex flex-col z-[2000]">
+                  <div className="px-4 py-2 border-b border-outline mb-2">
+                    <p className="text-sm font-medium text-foreground truncate">{user.user_metadata?.full_name || user.email}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 text-sm text-left text-red-500 hover:bg-surface-container transition-colors"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -282,7 +322,7 @@ export default function HomeClient({ initialCities }: HomeClientProps) {
       />
 
       {/* Floating Create Button (Bottom Right) */}
-      {!selectedPois.length && (
+      {!selectedPois.length && user && (
         <div className="fixed bottom-6 right-6 z-[1000]">
           <button
             onClick={() => setIsCreateModalOpen(true)}
