@@ -15,7 +15,8 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
 const routeCache = new Map<string, { coordinates: [number, number][]; distance: number }>();
 
 export async function getRoute(start: [number, number], end: [number, number]): Promise<{ coordinates: [number, number][]; distance: number } | null> {
-  const cacheKey = `${start[0].toFixed(5)},${start[1].toFixed(5)}-${end[0].toFixed(5)},${end[1].toFixed(5)}`;
+  const profile = 'foot'; // Use walking movement system
+  const cacheKey = `${profile}-${start[0].toFixed(5)},${start[1].toFixed(5)}-${end[0].toFixed(5)},${end[1].toFixed(5)}`;
   
   if (routeCache.has(cacheKey)) {
     return routeCache.get(cacheKey) || null;
@@ -24,7 +25,7 @@ export async function getRoute(start: [number, number], end: [number, number]): 
   try {
     // OSRM coordinates are [lon, lat]
     const response = await fetch(
-      `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`
+      `https://router.project-osrm.org/route/v1/${profile}/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`
     );
     const data = await response.json();
 
