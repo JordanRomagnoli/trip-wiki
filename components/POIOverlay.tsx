@@ -23,11 +23,12 @@ export default function POIOverlay({
     onToggleVisited,
 }: POIOverlayProps) {
     const currentPoi = selectedPois[selectedPois.length - 1];
-    const isVisited = visitedPois.includes(currentPoi.id);
+    const isVisited = currentPoi ? visitedPois.includes(currentPoi.id) : false;
 
     const [copied, setCopied] = useState(false);
 
     const handleShare = async () => {
+        if (!currentPoi) return;
         try {
             const shareUrl = `${window.location.origin}${window.location.pathname}?poi=${currentPoi.id}`;
             await navigator.clipboard.writeText(shareUrl);
@@ -63,6 +64,7 @@ export default function POIOverlay({
     }
 
     const openInMaps = () => {
+        if (!currentPoi) return;
         const url = `https://www.google.com/maps/search/?api=1&query=${currentPoi.coordinates[0]},${currentPoi.coordinates[1]}`;
         window.open(url, "_blank");
     };
