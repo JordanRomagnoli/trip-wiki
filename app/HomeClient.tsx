@@ -37,15 +37,36 @@ const CATEGORIES = [
 interface HomeClientProps {
   initialCities: City[];
   user?: User | null;
+  poi?: string;
 }
 
-export default function HomeClient({ initialCities, user }: HomeClientProps) {
+export default function HomeClient({ initialCities, user, poi }: HomeClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  const [currentCityId, setCurrentCityId] = useState(initialCities[0]?.id || 'valencia');
-  const [selectedPois, setSelectedPois] = useState<POI[]>([]);
+  // Find the initial POI and city if shared in the URL
+  const initialPoiData = useMemo(() => {
+    if (!poi) return null;
+    for (const city of initialCities) {
+      const found = city.pois.find((p) => p.id === poi);
+      if (found) {
+        return { cityId: city.id, poi: found };
+      }
+    }
+    return null;
+  }, [poi, initialCities]);
+
+  const [currentCityId, setCurrentCityId] = useState(() => {
+    if (initialPoiData) return initialPoiData.cityId;
+    return initialCities[0]?.id || 'valencia';
+  });
+
+  const [selectedPois, setSelectedPois] = useState<POI[]>(() => {
+    if (initialPoiData) return [initialPoiData.poi];
+    return [];
+  });
+
   const [mapTheme, setMapTheme] = useState<'light' | 'dark'>('light');
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [routeData, setRouteData] = useState<{ coordinates: [number, number][]; distance: number } | null>(null);
@@ -61,6 +82,26 @@ export default function HomeClient({ initialCities, user }: HomeClientProps) {
   const selectedItineraryId = searchParams.get('itinerary');
 
   const currentCity = initialCities.find((c) => c.id === currentCityId) || initialCities[0];
+
+  // Synchronize state when the URL's poi query parameter changes
+  useEffect(() => {
+    if (poi) {
+      for (const city of initialCities) {
+        const found = city.pois.find((p) => p.id === poi);
+        if (found) {
+          if (selectedPois.length !== 1 || selectedPois[0].id !== poi) {
+            setCurrentCityId(city.id);
+            setSelectedPois([found]);
+          }
+          return;
+        }
+      }
+    } else {
+      if (selectedPois.length === 1) {
+        setSelectedPois([]);
+      }
+    }
+  }, [poi, initialCities]);
 
   // Load visited POIs from localStorage
   useEffect(() => {
@@ -127,6 +168,7 @@ export default function HomeClient({ initialCities, user }: HomeClientProps) {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('category');
     params.delete('itinerary');
+    params.delete('poi');
     router.push(`?${params.toString()}`);
   };
 
@@ -148,18 +190,30 @@ export default function HomeClient({ initialCities, user }: HomeClientProps) {
   };
 
   const handlePoiClick = (poi: POI) => {
+    let newSelected: POI[] = [];
     if (selectedPois.find((p) => p.id === poi.id)) {
       // Deselect if already selected
-      setSelectedPois(selectedPois.filter((p) => p.id !== poi.id));
+      newSelected = selectedPois.filter((p) => p.id !== poi.id);
     } else if (selectedPois.length < 2) {
       // Add to selection if less than 2
-      setSelectedPois([...selectedPois, poi]);
+      newSelected = [...selectedPois, poi];
     } else {
       // Replace second point if already 2 selected
-      setSelectedPois([selectedPois[0], poi]);
+      newSelected = [selectedPois[0], poi];
     }
 
-    if (userLocation && selectedPois.length >= 1) {
+    setSelectedPois(newSelected);
+
+    // Update URL query parameters
+    const params = new URLSearchParams(searchParams.toString());
+    if (newSelected.length === 1) {
+      params.set('poi', newSelected[0].id);
+    } else {
+      params.delete('poi');
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
+
+    if (userLocation && newSelected.length >= 1) {
       setUserLocation(null);
     }
   };
@@ -314,6 +368,9 @@ export default function HomeClient({ initialCities, user }: HomeClientProps) {
         onReset={() => {
           setSelectedPois([]);
           setUserLocation(null);
+          const params = new URLSearchParams(searchParams.toString());
+          params.delete('poi');
+          router.replace(`?${params.toString()}`, { scroll: false });
         }}
         userLocation={userLocation}
         roadDistance={routeData?.distance}
@@ -367,6 +424,7 @@ export default function HomeClient({ initialCities, user }: HomeClientProps) {
                         const params = new URLSearchParams(searchParams.toString());
                         params.set('category', cat.id);
                         params.delete('itinerary');
+                        params.delete('poi');
                         router.push(`?${params.toString()}`);
                         setSelectedPois([]);
                         setIsFilterModalOpen(false);
@@ -392,6 +450,7 @@ export default function HomeClient({ initialCities, user }: HomeClientProps) {
                         const params = new URLSearchParams(searchParams.toString());
                         params.delete('category');
                         params.delete('itinerary');
+                        params.delete('poi');
                         router.push(`?${params.toString()}`);
                         setSelectedPois([]);
                         setIsFilterModalOpen(false);
@@ -410,6 +469,7 @@ export default function HomeClient({ initialCities, user }: HomeClientProps) {
                           const params = new URLSearchParams(searchParams.toString());
                           params.set('itinerary', it.id);
                           params.delete('category');
+                          params.delete('poi');
                           router.push(`?${params.toString()}`);
                           setSelectedPois([]);
                           setIsFilterModalOpen(false);

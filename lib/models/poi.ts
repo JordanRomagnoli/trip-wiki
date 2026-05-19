@@ -50,3 +50,20 @@ export async function createPoi(poi: Omit<POI, 'id' | 'visited' | 'created_at'>)
 
   return data as POI
 }
+
+export async function getPoiById(id: string): Promise<POI | null> {
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase
+    .from('pois')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    console.error(`Error fetching POI ${id}:`, error)
+    return null
+  }
+
+  return data as POI
+}

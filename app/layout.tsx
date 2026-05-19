@@ -14,8 +14,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trip Wiki | La guida di cou nessuno ha il bisogno",
-  description: "Eslora 2 città.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  title: "Trip Wiki | La guida di cui nessuno ha il bisogno",
+  description: "Esplora 2 città.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

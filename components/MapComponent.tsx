@@ -90,7 +90,13 @@ const userLocationIcon = L.divIcon({
   iconAnchor: [24, 24],
 });
 
-function MapEffect({ userLocation }: { userLocation: [number, number] | null }) {
+function MapEffect({
+  userLocation,
+  selectedPoi,
+}: {
+  userLocation: [number, number] | null;
+  selectedPoi: POI | null;
+}) {
   const map = useMap();
 
   useEffect(() => {
@@ -100,6 +106,14 @@ function MapEffect({ userLocation }: { userLocation: [number, number] | null }) 
       });
     }
   }, [userLocation, map]);
+
+  useEffect(() => {
+    if (selectedPoi) {
+      map.flyTo(selectedPoi.coordinates, 15, {
+        duration: 1.5,
+      });
+    }
+  }, [selectedPoi, map]);
 
   return null;
 }
@@ -123,7 +137,10 @@ export default function MapComponent({
         className={`w-full h-full transition-colors duration-500 ${theme === 'dark' ? 'bg-background' : 'bg-[#f8f9fa]'}`}
       >
         <ChangeView center={city.center} zoom={city.zoom} />
-        <MapEffect userLocation={userLocation} />
+        <MapEffect
+          userLocation={userLocation}
+          selectedPoi={selectedPois.length === 1 ? selectedPois[0] : null}
+        />
 
         {theme === 'dark' ? (
           <TileLayer
