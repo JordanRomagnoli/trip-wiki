@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import { City, POI } from '@/lib/types';
@@ -58,11 +58,17 @@ const categoryColors = {
   disco: '#ec4899',    // pink
 };
 
-function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
+function ChangeView({ cityId, center, zoom }: { cityId: string; center: [number, number]; zoom: number }) {
   const map = useMap();
+  const lastCityIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    map.setView(center, zoom);
-  }, [center, zoom, map]);
+    if (lastCityIdRef.current !== cityId) {
+      map.setView(center, zoom);
+      lastCityIdRef.current = cityId;
+    }
+  }, [cityId, center, zoom, map]);
+
   return null;
 }
 
@@ -136,7 +142,7 @@ export default function MapComponent({
         zoomControl={false}
         className={`w-full h-full transition-colors duration-500 ${theme === 'dark' ? 'bg-background' : 'bg-[#f8f9fa]'}`}
       >
-        <ChangeView center={city.center} zoom={city.zoom} />
+        <ChangeView cityId={city.id} center={city.center} zoom={city.zoom} />
         <MapEffect
           userLocation={userLocation}
           selectedPoi={selectedPois.length === 1 ? selectedPois[0] : null}
